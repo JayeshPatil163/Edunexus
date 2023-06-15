@@ -183,7 +183,7 @@ public class lecprac extends AppCompatActivity {
         String s2 = dt[0];
         String s3 = dt[1];
 
-        body = "Lecture of " + mngtchclass.sub_name + "is scheduled at" + s1;
+        body = "Lecture of " + mngtchclass.sub_name + "is scheduled on " + s2 + " at " + s3;
 
         Intent intent = new Intent();
         intent.putExtra("1", edt.getText().toString());
@@ -300,7 +300,7 @@ public class lecprac extends AppCompatActivity {
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    sendNotificationToStudent("EduNexus", "Message from EduNexus");
+                    sendNotificationToStudent("EduNexus", body);
                 }
             }, 1000); // delay for 1000 milliseconds
         }
