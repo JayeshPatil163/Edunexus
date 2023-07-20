@@ -321,7 +321,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/person/baseline_person_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/keyboard_double_arrow_down/baseline_keyboard_double_arrow_down_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -332,8 +332,8 @@
                         <option name="values">
                           <map>
                             <entry key="autoMirrored" value="true" />
-                            <entry key="color" value="50416e" />
-                            <entry key="outputName" value="profile_def" />
+                            <entry key="color" value="9c9c9c" />
+                            <entry key="outputName" value="baseline_keyboard_arrow_down_24" />
                             <entry key="sourceFile" value="C:\Users\gadget guru\AndroidStudioProjects\Final Project" />
                           </map>
                         </option>

@@ -586,7 +586,7 @@ public class Attendance extends Fragment {
         String[] ar = s.split("_");
         String a = ar[0];
         //showToast("hmmm " + a);
-
+//A0D2E8
         //String dayRow = "Day " + currentDay;
         // Iterate over each row
         showToast("" + rowCount);

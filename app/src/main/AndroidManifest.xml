@@ -73,7 +73,7 @@ Then rebuild and see if it works for you
             android:exported="false" />
         <activity
             android:name=".uploadstdmaterial"
-            android:exported="true"></activity>
+            android:exported="true" />
         <activity
             android:name=".page2"
             android:exported="false" />

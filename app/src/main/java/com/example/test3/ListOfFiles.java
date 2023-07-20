@@ -1,5 +1,6 @@
 package com.example.test3;
 
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
@@ -12,16 +13,21 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Environment;
 import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,15 +56,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ListOfFiles extends Fragment {
+public class ListOfFiles extends Fragment implements RecyclerViewInterface{
 
-
-    ListView listView;
+    static AppCompatButton button;
+    public static RecyclerView recyclerView;
     private DatabaseReference databaseReference;
     private ValueEventListener valueEventListener;
-    ArrayList<String> itemList;
     TextView textView;
-    LinkAdapter linkAdapter;
+    public static List<FilesandMessages> fileNames;
+    protected File[] files;
+
+    static FilesAdapter adapter;
+
 
     public ListOfFiles() {
         // Required empty public constructor
@@ -76,14 +85,52 @@ public class ListOfFiles extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
 
         View view = inflater.inflate(R.layout.fragment_list_of_files, container, false);
         textView = view.findViewById(R.id.placeholderf);
-        listView = view.findViewById(R.id.listres);
-        listView.setDivider(null);
-        /*textView = view.findViewById(R.id.placeholder);
-        listView = rootView.findViewById(R.id.listlinks);*/
+        recyclerView = view.findViewById(R.id.showContent);
+
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        recyclerView.setLayoutManager(linearLayoutManager);
+
+        fileNames = new ArrayList<>();
+
+        button = view.findViewById(R.id.scrolldown);
+        button.setOnClickListener(view1 -> scrollToLastItem());
+        button.setVisibility(View.GONE);
+
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                if (dy > 0) {
+
+                } else if (dy < 0) {
+                    button.setVisibility(View.VISIBLE);
+                }
+
+                boolean isAtTop = !recyclerView.canScrollVertically(-1);
+                boolean isAtBottom = !recyclerView.canScrollVertically(1);
+                if (isAtTop) {
+
+                }
+                if (isAtBottom) {
+                    button.setVisibility(View.GONE);
+                }
+            }
+        });
+
+        if(uploadstdmaterial.s.equals("Teacher"))
+            showFiles();
+        else
+            viewFiles();
 
         return view;
     }
@@ -91,18 +138,21 @@ public class ListOfFiles extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(uploadstdmaterial.s.equals("Teacher"))
-            showFiles();
-        else
-            viewFiles();
+
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        //fileNames.clear();
         if (valueEventListener != null) {
             databaseReference.removeEventListener(valueEventListener);
         }
+    }
+
+    private static void scrollToLastItem() {
+        button.setVisibility(View.GONE);
+        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
     }
 
     public void showFiles()
@@ -119,28 +169,43 @@ public class ListOfFiles extends Fragment {
         if(directory.exists())
         {
             textView.setVisibility(View.GONE);
-            File[] files = directory.listFiles();
-            List<String> fileNames = new ArrayList<>();
+            files = directory.listFiles();
+
             for (File file : files) {
                 Uri fileUri = FileProvider.getUriForFile(getActivity().getApplicationContext(), "com.example.test3.fileprovider", file);
-                fileNames.add(file.getName() + "#404#URIBABY" + getContext().getContentResolver().getType(fileUri));
-            }
-            FilesAdapter adapter = new FilesAdapter(getActivity(), fileNames);
-            listView.setAdapter(adapter);
+                /*fileNames.add(file.getName() + "#404#URIBABY" + getContext().getContentResolver().getType(fileUri));*/
 
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                fileNames.add(new FilesandMessages(file.getName() , getContext().getContentResolver().getType(fileUri) , "" ));
+            }
+            adapter = new FilesAdapter(/*getActivity(),*/ fileNames, this);
+
+
+
+            recyclerView.setAdapter(adapter);
+            //listView.setAdapter(adapter);
+
+            /*listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    File selectedFile = files[position];
-                    openFile(selectedFile);
+                    try {
+                        File selectedFile = files[position];
+                        openFile(selectedFile);
+                    }
+                    catch (ArrayIndexOutOfBoundsException ae)
+                    {
+
+                    }
                 }
             });
-
+*/
         }
         else {
             textView.setVisibility(View.VISIBLE);
         }
+        scrollToLastItem();
     }
+
+
 
     private void openFile(File file) {
         try {
@@ -212,6 +277,8 @@ public class ListOfFiles extends Fragment {
         };
 
         databaseReference.addValueEventListener(valueEventListener);
+
+        scrollToLastItem();
     }
 
     private void downloadFile(String downloadUrl, String fileName) {
@@ -297,5 +364,23 @@ public class ListOfFiles extends Fragment {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    public void onItemClick(int position) {
+        try {
+            File selectedFile = files[position];
+            openFile(selectedFile);
+        }
+        catch (ArrayIndexOutOfBoundsException ae)
+        {
+
+        }
+    }
+
+    public static void addMessage(String title, String type, String message) {
+        fileNames.add(new FilesandMessages(title, type, message));
+        adapter.notifyItemInserted(fileNames.size() - 1);
+        scrollToLastItem();
     }
 }

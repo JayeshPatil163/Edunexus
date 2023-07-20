@@ -2,6 +2,7 @@ package com.example.test3;
 
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -11,24 +12,43 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
+import android.webkit.MimeTypeMap;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
+import androidx.core.view.GestureDetectorCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.viewpager.widget.ViewPager;
 
@@ -48,6 +68,7 @@ import com.google.api.services.drive.model.Permission;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.apache.xmlbeans.impl.xb.xsdschema.Public;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -62,10 +83,21 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class uploadstdmaterial extends AppCompatActivity {
+public class uploadstdmaterial extends AppCompatActivity implements GestureDetector.OnGestureListener{
 
+    java.io.File file = null;
+
+    float startScale = 0f;
+    float midScale = 1.2f;
+    float endScale = 1f;
+    int duration = 300;
+    ScaleAnimation scaleUpAnimation,scaleDownAnimation;
+
+    private GestureDetectorCompat gestureDetectorCompat;
+    int fileexist = 1;
     GoogleSignInAccount acct,stud;
-    AppCompatButton bt,bt1,bt2;
+    AppCompatButton bt,bt1,bt2, cancel, sendmeassage;
+    ImageView imageView;
     private static final int REQUEST_AUTHORIZATION = 1001;
     private static final int PICK_FILE_REQUEST = 1;
     private Thread signInThread,thread,another;
@@ -77,11 +109,17 @@ public class uploadstdmaterial extends AppCompatActivity {
     static String dynamicurl,getFlag;
     public static String sub_Id,s;
     Dialog d1,d2;
-    TextView t1;
-    EditText t2,t3;
+    TextView t1, filen, textView1;
+    EditText t2,t3,entermessage;
     ViewPager viewPager;
     TabLayout tabLayout;
-    @SuppressLint("MissingInflatedId")
+    TextWatcher textWatcher;
+    int ultimateflag = 1;
+
+    public uploadstdmaterial() {
+    }
+
+    @SuppressLint({"MissingInflatedId", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,13 +136,116 @@ public class uploadstdmaterial extends AppCompatActivity {
         bt2 = d2.findViewById(R.id.savelink);
         bt2.setOnClickListener(view -> getUrl());
 
+        linearLayout = findViewById(R.id.fileattached);
+        linearLayout.setVisibility(View.GONE);
+        entermessage = findViewById(R.id.entermessage);
+        //entermessage.set
+        filen = findViewById(R.id.filename);
+        textView1 = findViewById(R.id.sourcetype);
+        imageView = findViewById(R.id.filethumbnail);
+        cancel = findViewById(R.id.cancelattach);
+        cancel.setVisibility(View.GONE);
+        cancel.setOnClickListener(view -> performFadeOutAnimation());
+        sendmeassage = findViewById(R.id.send);
+        sendmeassage.setOnClickListener(view -> sendMessage());
+
+        applyFrostedGlassEffect(linearLayout);
+
+        bt = findViewById(R.id.upload);
+        bt.setOnClickListener(view -> showChooser());
+
+        sendmeassage.setVisibility(View.GONE);
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
+        int newMargin = 180;
+        layoutParams.setMarginEnd(newMargin);
+        entermessage.setLayoutParams(layoutParams);
+
+        textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (file == null) {
+                    if (charSequence.toString().isEmpty()) {
+                        sendmeassage.setVisibility(View.GONE);
+                        ultimateflag = 1;
+                        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
+                        int newMargin = 180;
+                        layoutParams.setMarginEnd(newMargin);
+                        entermessage.setLayoutParams(layoutParams);
+                    }
+                    else if (ultimateflag == 1)
+                    {
+                        //sendmeassage.setVisibility(View.VISIBLE);
+                        performFadeOutAnimationSend();
+                        ultimateflag = 0;
+                        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
+                        int newMargin = 335;
+                        layoutParams.setMarginEnd(newMargin);
+                        entermessage.setLayoutParams(layoutParams);
+                    }
+                }
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(file == null) {
+                    if (charSequence.toString().isEmpty()) {
+                        sendmeassage.setVisibility(View.GONE);
+                        ultimateflag = 1;
+                        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
+                        int newMargin = 180;
+                        layoutParams.setMarginEnd(newMargin);
+                        entermessage.setLayoutParams(layoutParams);
+                    }
+                    else if(ultimateflag == 1)
+                    {
+                        //sendmeassage.setVisibility(View.VISIBLE);
+                        performFadeOutAnimationSend();
+                        ultimateflag = 0;
+                        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
+                        int newMargin = 335;
+                        layoutParams.setMarginEnd(newMargin);
+                        entermessage.setLayoutParams(layoutParams);
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if(editable == null)
+                    sendmeassage.setVisibility(View.GONE);
+            }
+        };
+
+
+        entermessage.addTextChangedListener(textWatcher);
+        gestureDetectorCompat = new GestureDetectorCompat(this, this);
+
+        linearLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return gestureDetectorCompat.onTouchEvent(event);
+            }
+        });
+
+
+        scaleUpAnimation = new ScaleAnimation(
+                startScale, midScale, startScale, midScale,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f
+        );
+        scaleUpAnimation.setDuration(duration / 2);
+
+        scaleDownAnimation = new ScaleAnimation(
+                midScale, endScale, midScale, endScale,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f
+        );
+        scaleDownAnimation.setDuration(duration / 2);
+        scaleDownAnimation.setStartOffset(duration / 2);
 
 
         bt1 = findViewById(R.id.upldlink);
         bt1.setOnClickListener(view ->updlink());
 
-        bt = findViewById(R.id.upload);
-        bt.setOnClickListener(view -> showChooser());
+
 
         acct = GoogleSignIn.getLastSignedInAccount(this);
         sharedPreferences3 = getSharedPreferences("fold_id", Context.MODE_PRIVATE);
@@ -202,7 +343,6 @@ public class uploadstdmaterial extends AppCompatActivity {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-
                 if(s.equals("Teacher")) {
                     int position = tab.getPosition();
                     switch (position) {
@@ -229,6 +369,9 @@ public class uploadstdmaterial extends AppCompatActivity {
 
                                 }
                                 else {
+                                    linearLayout.setVisibility(View.GONE);
+                                    cancel.setVisibility(View.GONE);
+                                    file = null;
                                     bt.setVisibility(View.GONE);
                                     bt1.setVisibility(View.VISIBLE);
                                     tab = tabLayout.getTabAt(1);
@@ -237,6 +380,11 @@ public class uploadstdmaterial extends AppCompatActivity {
                                 }
                             }
                             else {
+                                if(file != null) {
+                                    linearLayout.setVisibility(View.VISIBLE);
+                                    cancel.setVisibility(View.VISIBLE);
+                                    fileexist = 1;
+                                }
                                 bt.setVisibility(View.VISIBLE);
                                 bt1.setVisibility(View.GONE);
                             }
@@ -258,6 +406,10 @@ public class uploadstdmaterial extends AppCompatActivity {
                             }
                             bt.setVisibility(View.GONE);
                             bt1.setVisibility(View.VISIBLE);
+                            linearLayout.setVisibility(View.GONE);
+                            cancel.setVisibility(View.GONE);
+                            if(file != null)
+                                fileexist = 0;
                             break;
                     }
                 }
@@ -276,6 +428,151 @@ public class uploadstdmaterial extends AppCompatActivity {
 
 
         tabLayout.setupWithViewPager(viewPager);
+    }
+
+
+    /*private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+
+        private static final int SWIPE_THRESHOLD = 100;
+        private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            float deltaY = e2.getY() - e1.getY();
+
+            if (Math.abs(deltaY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                if (deltaY < 0) {
+                    // Swipe up detected, perform animation and make the view GONE
+                    performFadeOutAnimation();
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+*/
+
+
+    private void startFloatingAnimation() {
+        ObjectAnimator animator = ObjectAnimator.ofFloat(linearLayout, "translationY", -1f, 9f);
+        animator.setDuration(900);  // Set the duration of the animation (in milliseconds)
+        animator.setInterpolator(new AccelerateDecelerateInterpolator());
+        animator.setRepeatMode(ObjectAnimator.REVERSE);  // Reverse the animation
+        animator.setRepeatCount(ObjectAnimator.INFINITE);  // Repeat the animation indefinitely
+        animator.start();
+
+        ObjectAnimator animator1 = ObjectAnimator.ofFloat(cancel, "translationY", -1f, 9f);
+        animator1.setDuration(900);  // Set the duration of the animation (in milliseconds)
+        animator1.setInterpolator(new AccelerateDecelerateInterpolator());
+        animator1.setRepeatMode(ObjectAnimator.REVERSE);  // Reverse the animation
+        animator1.setRepeatCount(ObjectAnimator.INFINITE);  // Repeat the animation indefinitely
+        animator1.start();
+    }
+
+    public void sendMessage() {
+        if (file != null && fileexist == 1) {
+
+            String type = "Docs returned";
+            try {
+                Uri fileUri = FileProvider.getUriForFile(getApplicationContext(), "com.example.test3.fileprovider", file);
+                type = getContentResolver().getType(fileUri);
+            }
+            catch (NullPointerException ne) {
+
+            }
+            if(entermessage.getText().toString().isEmpty()) {
+                ListOfFiles.addMessage(file.getName(), type, "");
+            }
+            else {
+                ListOfFiles.addMessage(file.getName(), type, entermessage.getText().toString());
+                entermessage.setText("");
+            }
+            signInThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    //uploadFile(file);
+                }
+            });
+            signInThread.start();
+
+            performFadeOutAnimation();
+
+            sendmeassage.setVisibility(View.GONE);
+            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
+            int newMargin = 180;
+            layoutParams.setMarginEnd(newMargin);
+            entermessage.setLayoutParams(layoutParams);
+        } else {
+            ListOfFiles.addMessage( "" , "", entermessage.getText().toString() );
+            entermessage.setText("");
+            sendmeassage.setVisibility(View.GONE);
+            showToast("came here");
+            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
+            int newMargin = 180;
+            layoutParams.setMarginEnd(newMargin);
+            entermessage.setLayoutParams(layoutParams);
+            sendmeassage.setVisibility(View.GONE);
+        }
+    }
+
+    public void performFadeOutAnimation()
+    {
+        Animation fadeOutAnimation = new AlphaAnimation(1.0f, 0.0f);
+        fadeOutAnimation.setDuration(400);  // Set the duration of the fade-out animation
+        fadeOutAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                ObjectAnimator animator = ObjectAnimator.ofFloat(linearLayout, "translationY", 0f, -50f);
+                animator.setDuration(300);  // Set the duration of the animation (in milliseconds)
+                animator.setInterpolator(new AccelerateDecelerateInterpolator());
+                animator.start();
+                ObjectAnimator animator1 = ObjectAnimator.ofFloat(cancel, "translationY", 0f, -50f);
+                animator1.setDuration(300);  // Set the duration of the animation (in milliseconds)
+                animator1.setInterpolator(new AccelerateDecelerateInterpolator());
+                animator1.start();
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                linearLayout.setVisibility(View.GONE);
+                cancel.setVisibility(View.GONE);
+                file = null;
+                if(entermessage.getText().toString().isEmpty()) {
+                    sendmeassage.setVisibility(View.GONE);
+                    ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
+                    int newMargin = 180;
+                    layoutParams.setMarginEnd(newMargin);
+                    entermessage.setLayoutParams(layoutParams);
+                }
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+        linearLayout.startAnimation(fadeOutAnimation);
+        cancel.startAnimation(fadeOutAnimation);
+    }
+
+    public void performFadeOutAnimationSend()
+    {
+        sendmeassage.startAnimation(scaleUpAnimation);
+        showToast("also came here");
+        scaleUpAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                sendmeassage.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                sendmeassage.startAnimation(scaleDownAnimation);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+                // Animation repeat callback
+            }
+        });
     }
 
     public static String getFilePath(Context context, Uri uri) {
@@ -321,15 +618,7 @@ public class uploadstdmaterial extends AppCompatActivity {
                     String faviconUrl = null;
 
                     try {
-                /*Document document = Jsoup.connect(url).get();
-                faviconUrl = document.select("img.thumbnail").attr("src");
-                // Retrieve the favicon URL from the HTML
-                //faviconUrl = document.select("link[rel~=(?i)^(shortcut|icon)$]").attr("href");
-                if (faviconUrl.startsWith("//")) {
-                    faviconUrl = "http:" + faviconUrl;
-                } else if (!faviconUrl.startsWith("http")) {
-                    faviconUrl = url + faviconUrl;
-                }*/
+
                         // Assuming you have the website URL stored in a variable called "websiteUrl"
                         Document doc = Jsoup.connect(url).get();
                         Element iconElement = doc.select("link[rel~=(?i)^(shortcut|icon|favicon)]").first();
@@ -514,14 +803,84 @@ public class uploadstdmaterial extends AppCompatActivity {
                         //Toast.makeText(this, "Path contains /document/primary:", Toast.LENGTH_SHORT).show();
                         filePath = Environment.getExternalStorageDirectory() + "/" + filePath.substring("/document/primary:".length());
                     }
-                    java.io.File file = new java.io.File(filePath);
-                    signInThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            uploadFile(file);
-                        }
-                    });
-                    signInThread.start();
+                    file = new java.io.File(filePath);
+
+                    linearLayout.setVisibility(View.VISIBLE);
+                    cancel.setVisibility(View.VISIBLE);
+
+                    //sendmeassage.setVisibility(View.VISIBLE);
+                    ultimateflag = 1;
+                    if(ultimateflag == 1) {
+                        ultimateflag = 0;
+                        performFadeOutAnimationSend();
+                    }
+                    ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
+                    int newMargin = 335;
+                    layoutParams.setMarginEnd(newMargin);
+                    entermessage.setLayoutParams(layoutParams);
+
+                    startFloatingAnimation();
+
+                    filen.setText(file.getName());
+                    String type = "Docs returned";
+
+                    try {
+                        Uri fileUri = FileProvider.getUriForFile(getApplicationContext(), "com.example.test3.fileprovider", file);
+                        type = getContentResolver().getType(fileUri);
+                        /*extension = MimeTypeMap.getFileExtensionFromUrl(filePath);
+                        type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);*/
+                    }
+                    catch (NullPointerException ne) {
+
+                    }
+
+                    //Toast.makeText(uploadstdmaterial.this, type, Toast.LENGTH_SHORT).show();
+
+
+                switch (type)
+                {
+                    case "application/pdf": imageView.setImageResource(R.drawable.pdf);
+                        textView1.setText("PDF");
+                        break;
+
+                    case "image/jpeg": imageView.setImageResource(R.drawable.jpeg);
+                        textView1.setText("JPEG");
+                        break;
+
+                    case "image/png": imageView.setImageResource(R.drawable.jpeg);
+                        textView1.setText("PNG");
+                        break;
+
+                    case "image/gif": imageView.setImageResource(R.drawable.jpeg);
+                        textView1.setText("GIF");
+                        break;
+
+                    case "text/plain": imageView.setImageResource(R.drawable.txt);
+                        textView1.setText("TXT");
+                        break;
+
+                    case "application/vnd.openxmlformats-officedocument.presentationml.presentation": imageView.setImageResource(R.drawable.pptx);
+                        textView1.setText("GIF");
+                        break;
+
+                    case "application/vnd.ms-powerpoint": imageView.setImageResource(R.drawable.pptx);
+                        textView1.setText("GIF");
+                        break;
+
+                    case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": imageView.setImageResource(R.drawable.xlsx);
+                        textView1.setText("XLSX");
+                        break;
+
+                    case "application/vnd.ms-excel": imageView.setImageResource(R.drawable.xlsx);
+                        textView1.setText("XLSX");
+                        break;
+
+                    default: imageView.setImageResource(R.drawable.common);
+                        textView1.setText("DOCS");
+                }
+
+
+
             } else {
                 super.onActivityResult(requestCode, resultCode, data);
             }
@@ -538,7 +897,7 @@ public class uploadstdmaterial extends AppCompatActivity {
                     startActivityForResult(Intent.createChooser(intent1, "Select a file to upload"), REQUEST_CODE_OPEN_DOCUMENT_TREE);
                 }
                 else {*/
-                    showToast("Select Study Material for Subject");
+                    showToast("Select Document");
                     startActivityForResult(Intent.createChooser(intent, "Select a File to Upload"), PICK_FILE_REQUEST);
                // }
             } catch (android.content.ActivityNotFoundException ex) {
@@ -546,8 +905,11 @@ public class uploadstdmaterial extends AppCompatActivity {
             }
         }
 
+        LinearLayout linearLayout;
+
         public void uploadFile (java.io.File originalFile)
         {
+            file = null;
             Drive googleDriveService = getDriveService();
             String folder_id = sharedPreferences3.getString("sub" + sub_name, "");
             File fileMetaData = new File();
@@ -613,5 +975,62 @@ public class uploadstdmaterial extends AppCompatActivity {
             catch (IOException e) {
                 e.printStackTrace();
             }
+
+        }
+
+    @Override
+    public boolean onDown(@NonNull MotionEvent motionEvent) {
+        return true;
+    }
+
+    @Override
+    public void onShowPress(@NonNull MotionEvent motionEvent) {
+
+    }
+
+    @Override
+    public boolean onSingleTapUp(@NonNull MotionEvent motionEvent) {
+        return false;
+    }
+
+    @Override
+    public boolean onScroll(@NonNull MotionEvent motionEvent, @NonNull MotionEvent motionEvent1, float v, float v1) {
+        return false;
+    }
+
+    @Override
+    public void onLongPress(@NonNull MotionEvent motionEvent) {
+
+    }
+
+    @Override
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+        float deltaY = e2.getY() - e1.getY();
+        if (Math.abs(deltaY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+            if (deltaY < 0) {
+                // Swipe up detected, perform animation and make the view GONE
+
+                performFadeOutAnimation();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final int SWIPE_THRESHOLD = 100;
+    private static final int SWIPE_VELOCITY_THRESHOLD = 1000;
+
+
+    private void applyFrostedGlassEffect(View view) {
+        RenderEffect effect = null; // Adjust the radius and the sigma values as needed
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            effect = RenderEffect.createBlurEffect(12.5f, 12.5f, Shader.TileMode.CLAMP);
+        }
+
+        view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            view.setRenderEffect(effect);
         }
     }
+
+}
