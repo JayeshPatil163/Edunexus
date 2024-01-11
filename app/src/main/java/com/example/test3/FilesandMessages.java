@@ -30,7 +30,7 @@ public class FilesandMessages {
         return Type;
     }
 
-    public void setTitl(String title) {
+    public void setTitle(String title) {
         Title = title;
     }
 
