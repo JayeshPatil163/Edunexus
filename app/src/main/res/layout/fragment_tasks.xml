@@ -133,7 +133,7 @@
             android:textColor="@color/white"
             android:paddingTop="15dp"
             android:paddingBottom="15dp"
-            android:text="Upload Learning Resources"
+            android:text="Share with class"
             android:textSize="24sp" />
 
         <TextView

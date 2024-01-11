@@ -9,9 +9,16 @@
     <androidx.viewpager.widget.ViewPager
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="45dp"
         android:layout_below="@+id/tabLayout"
+        android:layout_marginBottom="40dp"
         android:id="@+id/viewpager"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:background="@color/white"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="40dp"/>
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
@@ -110,7 +117,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:alpha="0.6"
+        android:alpha="0.7"
         android:layout_marginStart="10dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="120dp"
@@ -167,6 +174,7 @@
     <androidx.appcompat.widget.AppCompatButton
         android:layout_above="@+id/entermessage"
         android:layout_alignParentEnd="true"
+        android:alpha="0.7"
         android:id="@+id/cancelattach"
         android:layout_marginEnd="90dp"
         android:layout_marginBottom="55dp"

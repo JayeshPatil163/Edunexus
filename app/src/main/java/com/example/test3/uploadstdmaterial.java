@@ -80,8 +80,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Locale;
 
 public class uploadstdmaterial extends AppCompatActivity implements GestureDetector.OnGestureListener{
 
@@ -470,6 +474,17 @@ public class uploadstdmaterial extends AppCompatActivity implements GestureDetec
     }
 
     public void sendMessage() {
+
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        String formattedDateTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(year - 1900, month, day, hour, minute));
+
         if (file != null && fileexist == 1) {
 
             String type = "Docs returned";
@@ -481,10 +496,10 @@ public class uploadstdmaterial extends AppCompatActivity implements GestureDetec
 
             }
             if(entermessage.getText().toString().isEmpty()) {
-                ListOfFiles.addMessage(file.getName(), type, "");
+                ListOfFiles.addMessage(file.getName(), type, "", formattedDateTime);
             }
             else {
-                ListOfFiles.addMessage(file.getName(), type, entermessage.getText().toString());
+                ListOfFiles.addMessage(file.getName(), type, entermessage.getText().toString(), formattedDateTime);
                 entermessage.setText("");
             }
             signInThread = new Thread(new Runnable() {
@@ -503,10 +518,9 @@ public class uploadstdmaterial extends AppCompatActivity implements GestureDetec
             layoutParams.setMarginEnd(newMargin);
             entermessage.setLayoutParams(layoutParams);
         } else {
-            ListOfFiles.addMessage( "" , "", entermessage.getText().toString() );
+            ListOfFiles.addMessage( "" , "", entermessage.getText().toString(), formattedDateTime );
             entermessage.setText("");
             sendmeassage.setVisibility(View.GONE);
-            showToast("came here");
             ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) entermessage.getLayoutParams();
             int newMargin = 180;
             layoutParams.setMarginEnd(newMargin);
@@ -556,7 +570,6 @@ public class uploadstdmaterial extends AppCompatActivity implements GestureDetec
     public void performFadeOutAnimationSend()
     {
         sendmeassage.startAnimation(scaleUpAnimation);
-        showToast("also came here");
         scaleUpAnimation.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {

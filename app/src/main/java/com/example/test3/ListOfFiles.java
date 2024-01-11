@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -92,6 +93,7 @@ public class ListOfFiles extends Fragment implements RecyclerViewInterface{
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
 
         fileNames = new ArrayList<>();
 
@@ -175,7 +177,7 @@ public class ListOfFiles extends Fragment implements RecyclerViewInterface{
                 Uri fileUri = FileProvider.getUriForFile(getActivity().getApplicationContext(), "com.example.test3.fileprovider", file);
                 /*fileNames.add(file.getName() + "#404#URIBABY" + getContext().getContentResolver().getType(fileUri));*/
 
-                fileNames.add(new FilesandMessages(file.getName() , getContext().getContentResolver().getType(fileUri) , "" ));
+                fileNames.add(new FilesandMessages(file.getName() , getContext().getContentResolver().getType(fileUri) , "" , "12 : 30"));
             }
             adapter = new FilesAdapter(/*getActivity(),*/ fileNames, this);
 
@@ -378,8 +380,8 @@ public class ListOfFiles extends Fragment implements RecyclerViewInterface{
         }
     }
 
-    public static void addMessage(String title, String type, String message) {
-        fileNames.add(new FilesandMessages(title, type, message));
+    public static void addMessage(String title, String type, String message, String time_message_sent) {
+        fileNames.add(new FilesandMessages(title, type, message, time_message_sent));
         adapter.notifyItemInserted(fileNames.size() - 1);
         scrollToLastItem();
     }

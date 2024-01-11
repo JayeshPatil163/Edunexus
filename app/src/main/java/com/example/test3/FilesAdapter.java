@@ -16,7 +16,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /*public class FilesAdapter extends ArrayAdapter<String> {
 
@@ -247,6 +251,18 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ViewHolder> 
 
         //holder.linearLayoutMessage.setVisibility(View.VISIBLE);
 
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        String formattedDateTime = new SimpleDateFormat("hh:mm a", Locale.getDefault()).format(new Date(year - 1900, month, day, hour, minute));
+
+        holder.time_message_sent.setText(message.getTime());
+
         if(message.getMessage().isEmpty()) {
             holder.timestampTextView.setVisibility(View.GONE);
             holder.linearLayoutFile.setVisibility(View.VISIBLE);
@@ -382,10 +398,12 @@ public class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.ViewHolder> 
         public TextView messageTextView;
         public TextView timestampTextView;
         public ImageView imageView;
+        public TextView time_message_sent;
         public LinearLayout linearLayoutMessage, linearLayoutFile;
 
         public ViewHolder(View itemView) {
             super(itemView);
+            time_message_sent = itemView.findViewById(R.id.time);
             senderTextView = itemView.findViewById(R.id.item);
             messageTextView = itemView.findViewById(R.id.filetype);
             timestampTextView = itemView.findViewById(R.id.messageContent);

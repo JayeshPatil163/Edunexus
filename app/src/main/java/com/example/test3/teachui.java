@@ -1,7 +1,6 @@
 package com.example.test3;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.Toolbar;
@@ -11,15 +10,12 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,7 +24,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.api.client.util.Objects;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -247,22 +242,28 @@ public class teachui extends AppCompatActivity {
 
         public void addClass(String name, String description, String sub_id, String est){
                 TextView ed = new TextView(teachui.this);
+                TextView ed1 = new TextView(teachui.this);
                 ed.setText(String.format("%s\n%s\n%s",name,description,est + " Lecture hours"));
                 ed.setBackgroundResource(R.drawable.fortui);
+                ed1.setBackgroundResource(R.drawable.img_2);
                 ed.setTextSize(20);
                 ed.setTextColor(ed.getContext().getColor(R.color.white));
                 ed.setTextAppearance(this, R.style.AppTheme);
                 ed.setPadding(40, 25, 40, 100);
                 ed.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
                 LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) ed.getLayoutParams();
+                ed1.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 350));
+                LinearLayout.LayoutParams layoutParams1 = (LinearLayout.LayoutParams) ed1.getLayoutParams();
                 int leftMargin = 20;
                 int topMargin = 20;
                 int rightMargin = 20;
                 int bottomMargin = 0;
                 layoutParams.setMargins(leftMargin, topMargin, rightMargin, bottomMargin);
                 ed.setLayoutParams(layoutParams);
+                ed1.setLayoutParams(layoutParams1);
                 ed.setOnClickListener(view ->mngPage(name, sub_id, description));
                 l.addView(ed);
+
                 d.hide();
         }
 
